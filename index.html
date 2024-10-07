@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Learning App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+          integrity="sha384-k6RqeWeci5ZR/Lv4MR0sA0FfDOMl5q9r4sI8l3FhU1zDkB/6Wz6o1Ftb+m0PaZ0"
+          crossorigin="anonymous">
+    <script src="https://kit.fontawesome.com/dfe5a8e197.js" crossorigin="anonymous"></script>
+    <style>
+        .heart {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            cursor: pointer;
+        }
+
+        .heart.filled {
+            fill: red;
+            stroke: red;
+        }
+
+        .category-item {
+            border-left: 4px solid blue;
+            padding-left: 10px;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateX(-100%);
+            animation: slideIn 0.5s forwards;
+        }
+
+        .category-item:hover {
+            background-color: rgba(31, 41, 55, 0.5);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .navbar {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .number-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #1D4ED8;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white">
+
+<!-- Navbar -->
+<nav class="navbar flex items-center justify-between p-4 bg-gray-800 shadow-md">
+    <div class="flex items-center">
+        <button id="backButton" class="text-white mr-4 hidden" onclick="goBack()">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <h1 id="pageTitle" class="text-xl font-bold">Learn Malay language</h1>
+    </div>
+    <button id="languageToggle" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition duration-200"
+            onclick="changeLanguage()">EN</button>
+</nav>
+
+<!-- Category Section -->
+<div id="categorySection" class="max-w-sm mx-auto p-4">
+    <ul class="space-y-4">
+        <!-- Dynamically generated categories -->
+    </ul>
+</div>
+
+<!-- Content Section -->
+<section id="contentSection" class="container mx-auto mt-0 p-4 grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
+    <!-- Cards will be dynamically inserted here -->
+</section>
+
+<script>
+    let currentLanguage = localStorage.getItem('language') || 'bn'; // Default to Bengali (bn)
+    let loveStatus = JSON.parse(localStorage.getItem('loveStatus')) || {}; // Love status for sentences
+    let currentCategory = ''; // Track currently selected category
+
+    // Language data structure
+    const languageData = {
+        'greetings': {
+            'bn': {
+                'category': 'অভিবাদন',
+                'sentences': [
+    { "sentence": "Nice to be here.", "meaning": "Selamat datang di sini.", "pronunciation": "এখানে আসতে পেরে ভালো লাগছে।" },
+    { "sentence": "শুভ সকাল।", "meaning": "Selamat pagi.", "pronunciation": "শুভ সকাল।" },
+    { "sentence": "শুভ বিকাল।", "meaning": "Selamat petang.", "pronunciation": "সেলামাত পেতাং।" },
+    { "sentence": "শুভ রাত্রি।", "meaning": "Selamat malam.", "pronunciation": "সেলামাত মালাম।" },
+    { "sentence": "কেমন আছেন?", "meaning": "Apa khabar?", "pronunciation": "আপা খাবার?" },
+    { "sentence": "আমি ভালো আছি।", "meaning": "Saya sihat.", "pronunciation": "সায়া সিহাত।" },
+    { "sentence": "ধন্যবাদ।", "meaning": "Terima kasih.", "pronunciation": "তেরিমা কাসিহ।" },
+    { "sentence": "বিদায়।", "meaning": "Selamat tinggal.", "pronunciation": "সেলামাত তিংগাল।" },
+    { "sentence": "শুভ রাত্রি।", "meaning": "Selamat tidur.", "pronunciation": "সেলামাত তিদুর।" },
+    { "sentence": "আবার দেখা হবে।", "meaning": "Jumpa lagi.", "pronunciation": "জুমপা লাগি।" }
+
+                ]
+            },
+            'en': {
+                'category': 'Greetings',
+                'sentences': [
+    { "sentence": "Nice to be here.", "meaning": "Selamat datang di sini.", "pronunciation": "এখানে আসতে পেরে ভালো লাগছে।" },
+    { "sentence": "Good morning.", "meaning": "Selamat pagi.", "pronunciation": "শুভ সকাল।" },
+    { "sentence": "Good afternoon.", "meaning": "Selamat petang.", "pronunciation": "শুভ বিকাল।" },
+    { "sentence": "Good night.", "meaning": "Selamat malam.", "pronunciation": "সেলামাত মালাম।" },
+    { "sentence": "How are you?", "meaning": "Apa khabar?", "pronunciation": "আপা খাবার?" },
+    { "sentence": "I am fine.", "meaning": "Saya sihat.", "pronunciation": "সায়া সিহাত।" },
+    { "sentence": "Thank you.", "meaning": "Terima kasih.", "pronunciation": "তেরিমা কাসিহ।" },
+    { "sentence": "Goodbye.", "meaning": "Selamat tinggal.", "pronunciation": "সেলামাত তিংগাল।" },
+    { "sentence": "Sleep well.", "meaning": "Selamat tidur.", "pronunciation": "সেলামাত তিদুর।" },
+    { "sentence": "See you again.", "meaning": "Jumpa lagi.", "pronunciation": "জুমপা লাগি।" }
+]
+
+            }
+        },
+        'greeting': {
+            'bn': {
+                'category': 'অভিবাদন',
+                'sentences': [
+                    { 'sentence': 'হ্যালো', 'meaning': 'Hello', 'pronunciation': 'He-lo' }
+                ]
+            },
+            'en': {
+                'category': 'Greetings',
+                'sentences': [
+                    { 'sentence': 'Hello', 'meaning': 'হ্যালো', 'pronunciation': 'He-lo' }
+                ]
+            }
+        },
+        'farewell': {
+            'bn': {
+                'category': 'বিদায়',
+                'sentences': [
+                    { 'sentence': 'বিদায়', 'meaning': 'Goodbye', 'pronunciation': 'Bi-da-yee' }
+                ]
+            },
+            'en': {
+                'category': 'Farewell',
+                'sentences': [
+                    { 'sentence': 'Goodbye', 'meaning': 'বিদায়', 'pronunciation': 'Bi-da-yee' }
+                ]
+            }
+        },
+    };
+
+    // Update the navbar title based on the current page and language
+    function updateNavbarTitle(pageType = 'home') {
+        const navbarTitle = document.getElementById('pageTitle');
+        const backButton = document.getElementById('backButton');
+
+        if (pageType === 'home') {
+            navbarTitle.innerText = currentLanguage === 'bn' ? 'হোম' : 'Home';
+            backButton.classList.add('hidden'); // Hide back button on home
+        } else if (pageType === 'category') {
+            navbarTitle.innerText = currentLanguage === 'bn' ? 'বিভাগ' : 'Category';
+            backButton.classList.add('hidden'); // Hide back button on category
+        } else if (pageType === 'content') {
+            navbarTitle.innerText = languageData[currentCategory][currentLanguage].category; // Show selected category title based on current language
+            backButton.classList.remove('hidden'); // Show back button on content
+        }
+    }
+
+    function renderTranslatedContent() {
+        const contentSection = document.getElementById('contentSection');
+        contentSection.innerHTML = ''; // Clear previous content
+
+        const selectedCategoryData = languageData[currentCategory][currentLanguage].sentences;
+
+        selectedCategoryData.forEach((data, index) => {
+            const isLoved = loveStatus[`${currentCategory}-${currentLanguage}-${index}`] || false;
+
+            const cardHtml = `
+                <div class="bg-gray-800 rounded-lg p-6 shadow-lg transition duration-500 ease-in-out transform hover:scale-105 relative animate-enter">
+                    <h2 class="text-3xl font-semibold mb-4">${data.sentence}</h2>
+                    <p class="text-xl text-gray-400 italic mb-4">${data.meaning}</p>
+                    <p class="text-xl text-gray-400 italic mb-4">${data.pronunciation}</p>
+                    <div class="absolute bottom-4 right-4">
+                        <svg id="heartIcon-${currentCategory}-${currentLanguage}-${index}" class="heart ${isLoved ? 'filled' : ''}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" onclick="toggleLove('${currentCategory}-${currentLanguage}-${index}', event)">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+                        </svg>
+                    </div>
+                </div>
+            `;
+            contentSection.innerHTML += cardHtml;
+        });
+    }
+
+    function toggleLove(cardId, event) {
+        event.stopPropagation();
+        loveStatus[cardId] = !loveStatus[cardId]; // Toggle love status
+        localStorage.setItem('loveStatus', JSON.stringify(loveStatus)); // Save love status
+
+        const heartIcon = event.target.closest('svg');
+        heartIcon.classList.toggle('filled', loveStatus[cardId]);
+    }
+
+    function changeLanguage() {
+        currentLanguage = currentLanguage === 'bn' ? 'en' : 'bn';
+        localStorage.setItem('language', currentLanguage); // Save language choice
+        document.getElementById('languageToggle').innerText = currentLanguage === 'bn' ? 'EN' : 'BN';
+
+        // Render content and update navbar title
+        if (currentCategory) {
+            renderTranslatedContent(); // Re-render the content
+            updateNavbarTitle('content'); // Update the navbar title
+        } else {
+            renderCategories(); // Render categories if not in content view
+            updateNavbarTitle('home'); // Update navbar title for home
+        }
+    }
+
+    function renderCategories() {
+        const categories = Object.keys(languageData);
+        const categorySection = document.getElementById('categorySection').querySelector('ul');
+        categorySection.innerHTML = ''; // Clear previous categories
+
+        categories.forEach((category, index) => {
+            const categoryName = languageData[category][currentLanguage].category;
+            const delay = (index + 1) * 0.1; // Increase the delay based on the index
+
+            const categoryHtml = `
+                <li class="category-item bg-gray-800 rounded-lg p-4 flex items-center"
+                    onclick="showContent('${category}')"
+                    style="animation-delay: ${delay}s;">
+                    <span class="number-circle">${index + 1}</span>
+                    <span class="flex-grow">${categoryName}</span> <!-- Add flex-grow to push the button to the right -->
+                    <button class="text-white">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </li>
+            `;
+            categorySection.innerHTML += categoryHtml;
+        });
+    }
+
+    function showContent(category) {
+        currentCategory = category; // Store selected category
+        document.getElementById('categorySection').classList.add('hidden');
+        document.getElementById('contentSection').classList.remove('hidden');
+        updateNavbarTitle('content'); // Update navbar title
+        renderTranslatedContent(); // Display content
+
+        history.pushState({ page: 'content' }, null, ''); // Push state to history
+    }
+
+    function goBack() {
+        currentCategory = ''; // Clear current category
+        document.getElementById('contentSection').classList.add('hidden');
+        document.getElementById('categorySection').classList.remove('hidden');
+        updateNavbarTitle('home'); // Update navbar title
+
+        history.back(); // Go back in history stack
+    }
+
+    // Handle browser/device back button (Android back button)
+    window.addEventListener('popstate', (event) => {
+        if (currentCategory) {
+            goBack(); // Show category section if back button is pressed from content section
+        }
+    });
+
+    // Initialize the app
+    renderCategories();
+    updateNavbarTitle('home'); // Set initial navbar title
+</script>
+
+</body>
+
+</html>
